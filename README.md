@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛠️ Job Copilot Dashboard
 
-## Getting Started
+A high-performance, real-time **Kanban Job Application Pipeline** built with Next.js, TypeScript, and Tailwind CSS. The system utilizes a lightweight, cross-device token state engine synchronized over a secure Supabase proxy API—completely bypassing traditional password-heavy authentication.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🚀 Key System Architecture
+
+* **Zero-Auth Cloud Syncing:** Input your personal passphrase (`ADMIN_SECRET_KEY`) on any desktop or mobile browser to instantly authorize the client and synchronize live tracking pipelines across devices.
+* **Automated Data Ingestion:** Includes an optimized `POST` endpoint calibrated to receive, check for duplicates, and ingest active job metrics routed directly from an external **Make.com** automated scraper workflow.
+* **Snappy Stage Transitions:** Built-in programmatic card tracking with optimistic UI updates and real-time backend updates (`PATCH`) to switch tasks between `Backlog`, `Applied`, `Interviewing`, `Offer`, and `Suspended`.
+* **Algorithmic Match Engine:** Locally evaluates vector metric match scores dynamically depending on text definitions found within job payload strings.
+
+---
+
+## 🛠️ Environmental Variables Setup
+
+Create a `.env.local` file in the root directory of your project and assign your production values:
+
+```env
+# Supabase Database Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url_here
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_public_key_here
+
+# Cross-Device Passphrase & Webhook Protection Key
+ADMIN_SECRET_KEY=jason_platino_secure_copilot_token_2026
+```
+🏁 Getting Started1. Initialize System DependenciesBashnpm install
+```
+# or: yarn install / pnpm install / bun install
+```
+2. Boot Up Local Production EngineBashnpm run dev
+```
+# or: yarn dev / pnpm dev / bun dev
+```
+Open http://localhost:3000 inside your web browser to interact with the active layout sandbox.
+
+📡 API Routing Blueprint
+```
+GET
+Fetches matching database tracks directly from the scanned_jobs table.
+```
+Header Required: Authorization: Bearer <ADMIN_SECRET_KEY>
+```
+POST
+Used by the Make.com automation web scraper to append incoming job metrics.
+```
+Header Required: Authorization: Bearer <ADMIN_SECRET_KEY>
+```
+Payload Shape: { "title": "string", "company": "string", "description": "string", "url": "string" }
+```
+Note: Automatically rejects matching records by URL or Title/Company groupings to eliminate data point duplication.
+```
+PATCH
+Updates the job status field following UI drag-and-drop or column navigation events.
+```
+Header Required: Authorization: Bearer <ADMIN_SECRET_KEY>
+```
+Payload Shape: { "jobId": "uuid/string", "status": "Backlog" | "Applied" | "Interviewing" | "Offer" | "Suspended" }
+```
+🗄️ Database Table Schema 
+To back this engine seamlessly, ensure your Supabase data model follows this structure:
+```
+| Column Name | Type | Constraints / Defaults |
+| :--- | :--- | :--- |
+| `id` | `uuid` | Primary Key, Default: `gen_random_uuid()` |
+| `created_at` | `timestamptz` | Default: `now()` |
+| `title` | `text` | Not Null |
+| `company` | `text` | Not Null |
+| `description` | `text` | Nullable |
+| `url` | `text` | Nullable |
+| `status` | `text` | Default: `'Backlog'` |
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🌐 Live Preview
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+You can access the live production environment here:
+👉 **[View Live Preview](https://job-copilot-one.vercel.app)**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+*Note: To view your live personalized data, ensure you input your secure system passphrase in the dashboard header.*
