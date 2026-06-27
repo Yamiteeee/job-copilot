@@ -11,7 +11,7 @@ export function useJobCopilot(isGuest: boolean, userGroqKey?: string) {
       setLoading(true);
 
       // --- SANDBOX/DEMO MODE ---
-      if (isGuest) {
+      if (isGuest || !userGroqKey?.trim()) {
         const matchedMockJobs = mockJobs.map(job => ({
           ...job,
           match_score: calculateMatchScore(job.title, job.description)
@@ -21,47 +21,59 @@ export function useJobCopilot(isGuest: boolean, userGroqKey?: string) {
         return;
       }
 
-      // --- PRODUCTION/LIVE MODE: STAGE GATE VALIDATION ---
+      // --- PRODUCTION/LIVE MODE ---
       try {
-        const response = await fetch('/api/jobs'); // Your live Supabase proxy route
+        const response = await fetch('/api/jobs', {
+          headers: {
+            'Authorization': `Bearer ${userGroqKey}`
+          }
+        });
+        
         if (!response.ok) {
           throw new Error(`PIPELINE_DESYNC: Server status ${response.status}`);
         }
         
         const rawDatabaseData = await response.json();
         
-        // Process real database text records through your local matching algorithm
         const liveMatchedJobs = rawDatabaseData.map((job: any) => ({
           ...job,
-          status: job.status || 'Backlog', // Fallback defaults if columns are empty
+          status: job.status || 'Backlog',
           match_score: calculateMatchScore(job.title, job.description)
         }));
 
         setJobs(liveMatchedJobs);
       } catch (error) {
         console.error("LIVE_DATABASE_FETCH_ERROR:", error);
-        setJobs([]); // Clear board state to prevent silent leaks or mixed mock data artifacts
+        setJobs([]); 
       } finally {
         setLoading(false);
       }
     }
 
     syncJobPipeline();
-  }, [isGuest]); // Triggers database synchronization instantly upon mode switch toggles
+  }, [isGuest, userGroqKey]); 
 
   const updateJobStatus = async (jobId: string, newStatus: Job['status']) => {
-    // Instantly update local UI state layout layout optimizations 
+    // 1. Snappy UI state switch
     setJobs(prevJobs =>
       prevJobs.map(job => (job.id === jobId ? { ...job, status: newStatus } : job))
     );
     
-    // Write dynamic record mutations safely back to your production database
+    // 2. Persistent Mutation to DB via backend proxy
     if (!isGuest && userGroqKey?.trim()) {
       try {
-        console.log(`Live DB Action: Committing row updates to remote table layout...`);
-        
-        // OPTIONAL / PHASE 2 STUB: Add a PATCH/POST request here if you want column changes 
-        // to persist permanently inside your Supabase scanned_jobs table on drag/move events.
+        const response = await fetch('/api/jobs', {
+          method: 'PATCH',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userGroqKey}` 
+          },
+          body: JSON.stringify({ jobId, status: newStatus }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to synchronize status mutation to remote database.');
+        }
       } catch (err) {
         console.error("REMOTE_DATABASE_MUTATION_FAILURE:", err);
       }
